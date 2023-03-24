@@ -3,7 +3,7 @@
 Project started on 22/03/2023
 
 List of exercises (finished? Y/N):
-1. Quiz N (DD/MM/YYYY)
+1. Quiz N (23/03/2023)
 2. URL N (DD/MM/YYYY)
 3. Adventure N (DD/MM/YYYY)
 4. Parser N (DD/MM/YYYY)

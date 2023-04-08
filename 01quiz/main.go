@@ -1,27 +1,35 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
-	"strings"
+	"encoding/csv"
 	"io"
 	"bufio"
+	"strings"
 	"os"
 	"flag"
+	"time"
 )
 
-func main() {
-	var (
-		// quiz's hits and misses counter
-		hits, misses int = 0, 0
+var (
+	// quiz's hits and misses counter
+	hits, misses int	
 
-		// Flag variables
-		filename *string = flag.String("filename", "problems.csv", "choose quiz file inside quizzes folder")
-	)
+	// Flag variables
+
+	filename *string = flag.String("filename", "problems.csv", "choose quiz file inside quizzes folder")
+	timer *int = flag.Int("timer", 30, "choose timer duration")
+)
+
+// !TODO: Add string trimming/cleaning (delete all blank spaces, no answer will ever have blank spaces)
+func main() {	
 	flag.Parse()
 
+	// add time limit to quizz
+	AddTimeLimit(*timer)
+
 	// open csv to read it and defer its closing
-	file := OpenFile("quizzes/" + *filename) // !TODO: change the filename literal for a flag variable
+	file := OpenFile("quizzes/" + *filename)
 	defer file.Close()
 
 	csvReader := csv.NewReader(file)
@@ -55,7 +63,7 @@ func main() {
 	}
 
 
-	fmt.Printf("Quiz ended, hits: %v, misses:%v\n", hits, misses)
+	fmt.Printf("\nQuiz ended, hits: %v, misses:%v\n", hits, misses)
 	os.Exit(0)
 }
 
@@ -71,9 +79,11 @@ func OpenFile(filepath string) *os.File {
 	return file
 }
 
-// ReadCSVRecord reads a single line of a CSV file for each call, it receives
-// a pointer instead of a copy since Reader object has fields that may be
+// ReadCSVRecord reads a single line of a CSV file for each call (using *csv.Reader.Read()),
+// it receives a pointer instead of a copy since Reader object has fields that may be
 // modified by the client application.
+// Returns nil if an io.EOF err is returned by reading a line of the csv, if
+// another type of error is returned by reading a line, the function exits the program.
 func ReadCSVRecord(r *csv.Reader) []string {
 	record, err := r.Read()
 
@@ -89,4 +99,41 @@ func ReadCSVRecord(r *csv.Reader) []string {
 	}
 
 	return record
+}
+
+// AddTimeLimit adds a time limit to the quiz and ends it when the amount of time
+// specified has elapsed, halting the current quiz's question and showing player's
+// final stats.
+func AddTimeLimit(amount int) {
+	// AfterFunc triggers a callback after n seconds
+	time.AfterFunc(time.Second * time.Duration(amount), func (){
+		file := OpenFile("quizzes/" + *filename)
+		defer file.Close()
+		
+		SkipNLines(file, hits + misses, func() {
+			misses++
+		})
+
+		fmt.Printf("\nQuiz ended, hits: %v, misses:%v\n", hits, misses)
+		os.Exit(0)
+	})
+}
+// SkipNLines skips n lines from a file and calls a given function on all the
+// non-skipped lines.
+func SkipNLines(file *os.File, n int, fx func()) {
+	csvReader := csv.NewReader(file)
+	lineCount := 0
+	for {
+		// get a line's record and store it
+		record := ReadCSVRecord(csvReader)
+		if record == nil {
+			return
+		}
+
+		// call the indicated funtion after n line skips
+		lineCount++
+		if lineCount > n {
+			fx()
+		}
+	}
 }

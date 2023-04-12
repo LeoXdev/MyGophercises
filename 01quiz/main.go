@@ -54,6 +54,8 @@ func main() {
 		}
 		// remove the delimeter from the string, ReadString returns a value up to the ocurring parameter
 		input = strings.TrimSuffix(input, "\n")
+		// remove white spaces
+		input = CleanAnswer(input)
 
 		if input == record[1] {
 			hits++
@@ -136,4 +138,9 @@ func SkipNLines(file *os.File, n int, fx func()) {
 			fx()
 		}
 	}
+}
+// CleanAnswer removes white spaces inside an entered answer, the strings
+// wouldn't need more processing than that.
+func CleanAnswer(str string) string {
+	return strings.ReplaceAll(str, " ", "")
 }

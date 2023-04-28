@@ -2,7 +2,9 @@ package handler
 
 import (
 	"net/http"
-) 
+
+	"gopkg.in/yaml.v3"
+)
 
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
@@ -43,7 +45,53 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
+func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedYaml, err := parseYAML(string(yaml))
+	if err != nil {
+	  return nil, err
+	}
+	pathMap := buildMap(parsedYaml)
+	return MapHandler(pathMap, fallback), nil
+}
+// --- Helpher Functions ---
+
+// pathToURL is a struct for generating YAML that'll hold an attribute for
+// the path to have a redirection and another one that indicates the endpoint of
+// the redirection.
+type pathToURL struct {
+	Path string	`yaml:"path"`
+	URL string	`yaml:"url"`
+}
+// parseYAML parses a string into a []byte,
+// parse stands for read and try to translate.
+func parseYAML(yamlToParse string) ([]byte, error) {
+	var parsedYAML pathToURL
+
+	// parsingErr will only hold errors caused by a bad YAML syntax
+	parsingErr := yaml.Unmarshal([]byte(yamlToParse), &parsedYAML)
+
+	a, err := yaml.Marshal(&parsedYAML)
+	if err != nil {
+		panic(err)
+	}
+	
+	return a, parsingErr
+}
+// buildMap writes a yaml's values into a map and returns it.
+func buildMap(yamlData []byte) map[string]string {
+	mapWithValues := make(map[string]string)
+
+	yaml.Unmarshal(yamlData, &mapWithValues)
+
+	mapToReturn := make(map[string]string)
+	var path, url string
+	for k, v := range mapWithValues {
+		if k == "path" {
+			path = v
+		} else if k == "url" {
+			url = v
+		}
+	}
+	mapToReturn[path] = url
+	return mapToReturn
 }

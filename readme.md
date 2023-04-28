@@ -2,9 +2,9 @@
 
 Project started on 22/03/2023
 
-List of exercises (finished? Y/N):
+List of exercises (finished? Y/N/Bonus):
 1. Quiz Y (pt1: 23/03/2023, pt2: 08/04/2023)
-2. URL N (DD/MM/YYYY)
+2. URL Y (27/04/2023)
 3. Adventure N (DD/MM/YYYY)
 4. Parser N (DD/MM/YYYY)
 5. Sitemap N (DD/MM/YYYY)

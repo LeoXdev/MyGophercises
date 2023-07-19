@@ -5,7 +5,7 @@ Project started on 22/03/2023
 List of exercises (finished? Y/N/Bonus):
 1. Quiz Y (pt1: 23/03/2023, pt2: 08/04/2023)
 2. URL Y (27/04/2023)
-3. Adventure N (DD/MM/YYYY)
+3. Adventure Y (18/07/2023)
 4. Parser N (DD/MM/YYYY)
 5. Sitemap N (DD/MM/YYYY)
 6. Hacker N (DD/MM/YYYY)

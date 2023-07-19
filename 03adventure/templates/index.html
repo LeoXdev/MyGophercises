@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{{ .Title }}</title>
+  </head>
+  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h1>{{ .Header }}</h1>
+
+    <!-- Select menu -->
+    <select id="stories-list">
+      <option disabled selected value> -- Select an Option -- </option>
+      <option value="gopher">Gopher</option>
+      <!--<option value="sf64">SF64</option>-->
+      <!--<option value="mmxvm3">MMXVM3</option>-->
+    </select>
+    <button id="start" type="button" onclick="startAdventure()">Start adventure!</button>
+    
+    <div id="render" style="width: 80%;">
+      <h4 id="render-title">Chapter title:</h4>
+      <p id="render-paragraph">
+
+      </p>
+
+      <ul id="render-options"><b>Options:</b>
+        
+      </ul>
+    </div>
+
+  </body>
+  <script>
+    'use strict';
+
+    window.onload = () => {  
+      // Hide the div where the adventure is rendered,
+      // it'll be shown after clicking the 'start' button
+      document.getElementById('render').hidden = true
+    }
+
+    // adventureJson will hold the JSON object retrieved from a Golang handler
+    let adventureJson
+
+    let renderTitle = document.getElementById('render-title')
+    let renderParagraph = document.getElementById('render-paragraph')
+    let renderOptions = document.getElementById('render-options')
+
+    let nextArc
+
+    // startAdventure fetches the JSON object for the selected adventure and loads it
+    // into memory.
+    // Then disables the select adventure menu to be able to render the adventure
+    // without interruptions, and shows the div where the adventure'll be rendered.
+    function startAdventure() {
+      var storiesList = document.getElementById('stories-list')
+      var selectedStory = storiesList.value
+
+      // End the function, because no real option has been selected
+      if (storiesList.selectedIndex === 0)
+        return
+
+      // Disable select menu
+      document.getElementById('start').disabled = true
+      storiesList.disabled = true
+      // Show the div where the adventure is rendered
+      document.getElementById('render').hidden = false
+
+      // Build a string holding the path to the handler with the adventure json
+      var jsonPath = '/adventures/' + selectedStory
+
+      fetch(jsonPath)
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        //console.log(data)
+        adventureJson = data
+      })
+      .then(() => {
+        // Fetch title from json and render it
+        renderTitle.innerText = adventureJson.intro.title
+        // Fetch story paragraphs from json and render them
+        for (let e of adventureJson.intro.story) {
+          let newEl = document.createElement('span')
+            newEl.innerText = e
+            newEl.appendChild(document.createElement('br'))
+            renderParagraph.appendChild(newEl)
+        }
+        // Fetch options from json and render them
+        for (let e of adventureJson.intro.options) {
+          let newEl = document.createElement('li')
+            newEl.innerHTML = e.text + ' ==> ' +
+            `<button id="${e.arc}"type="button" onclick="renderAdventure('${e.arc}')">` +
+            e.arc + '</button><br>'
+            newEl.style.textDecoration = 'none'
+            renderOptions.appendChild(newEl)
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching JSON:", error)
+      })
+
+    }
+
+    // renderAdventure is a generalized function to keep rendering
+    // the adventure after the first iteration (intro arc).
+    // Saves the selected arc on a variable and starts rendering the json contents
+    // found using that variable as key.
+    function renderAdventure(nextArc) {
+      // Delete existing paragraphs and options
+      let childToDelete = renderParagraph.lastElementChild
+      while (childToDelete) {
+          renderParagraph.removeChild(childToDelete)
+          childToDelete = renderParagraph.lastElementChild
+      }
+      let optionToDelete = renderOptions.lastElementChild
+      while (optionToDelete) {
+        renderOptions.removeChild(optionToDelete)
+        optionToDelete = renderOptions.lastElementChild
+      }
+
+      // Fetch next arc title from json and render it
+      renderTitle.innerText = adventureJson[nextArc].title
+      // Fetch next arc story paragraphs from json and render them
+      for (let e of adventureJson[nextArc].story) {
+        let newEl = document.createElement('span')
+          newEl.innerText = e
+          newEl.appendChild(document.createElement('br'))
+          renderParagraph.appendChild(newEl)
+      }
+      // Fetch next arc options from json and render them
+      if (adventureJson[nextArc].options.length == 0) {
+        // Enable select menu
+        var storiesList = document.getElementById('stories-list')
+        document.getElementById('start').disabled = false
+        storiesList.disabled = false
+        return
+      }
+
+      for (let e of adventureJson[nextArc].options) {
+        let newEl = document.createElement('li')
+          newEl.innerHTML = e.text + ' ==> ' +
+          `<button id="${e.arc}"type="button" onclick="renderAdventure('${e.arc}')">` +
+          e.arc + '</button><br>'
+          newEl.style.textDecoration = 'none'
+          renderOptions.appendChild(newEl)
+      }
+    }
+  </script>
+</html>

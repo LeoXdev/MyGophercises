@@ -65,7 +65,8 @@ func main() {
 		input = cleanAnswer(input)
 
 		// check if answer was right
-		if input == record[1] {
+		if strings.EqualFold(input, record[1]) {
+		//if input == record[1] {
 			hits++
 		} else {
 			misses++

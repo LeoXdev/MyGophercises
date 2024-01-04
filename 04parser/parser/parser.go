@@ -70,13 +70,12 @@ func ParseLinks(path string) (links, error) {
 		// When finding an opening <a> tag
 		// *<a> tags without a href won't be considerated
 		if strings.EqualFold(string(tag), "a") && !writing && hasAtts {
+			writing = true
 			// Keep iterating until the current attribute key is "href", this'll ensure
 			// that iattVal holds the url
 			// There may still be an opening <a> tag with other attributes other than href,
 			// to cover this, we'll loop around 170 times (the total number of attributes in HTMl);
 			// Source: https://www.howtocodeschool.com/2019/10/list-of-all-html-attributes-and-their-function.html
-			writing = true
-
 			ctr := 0
 			for {
 				// If there's not a href attribute on the <a> tag,
@@ -92,9 +91,24 @@ func ParseLinks(path string) (links, error) {
 			}
 			//newLink.href = ""
 			inProcessLinks.Push(newLink)
+		} else if strings.EqualFold(string(tag), "a") && writing && hasAtts {
+			// When finding a nested opening <a> tag
+			ctr := 0
+			for {
+				// If there's not a href attribute on the <a> tag,
+				if string(iattKey) == "href" || ctr == 170 {
+					break
+				}
+				iattKey, iattVal, _ = tokenizer.TagAttr()
+				ctr++
+			}
+			// If the ctr reached the 170 value means that the href wasn't found
+			if ctr != 170 {
+				newLink.Href = string(iattVal)
+			}
+			inProcessLinks.Push(newLink)
 		} else if strings.EqualFold(string(tag), "a") && writing {
 			// When finding a closing <a> tag
-			writing = false
 			res, err := inProcessLinks.Pop()
 			if err != nil {
 				return nil, errors.New("accesing links stack")
@@ -102,6 +116,12 @@ func ParseLinks(path string) (links, error) {
 			result = append(result, res)
 			// Reset the newLink values after appending the object to the list
 			newLink = link{}
+
+			// Without this check, the parser will skip any nested links
+			// If the stack of links isn't empty means, "we're still writing to a link object"
+			if inProcessLinks.IsEmpty() {
+				writing = false	
+			}
 		} else if writing {
 			// When finding a token and we want to write to the newLink.text
 			writtingTo, err := inProcessLinks.Peek()
@@ -117,9 +137,6 @@ func ParseLinks(path string) (links, error) {
 			inProcessLinks.Pop()
 			inProcessLinks.Push(writtingTo)
 		}
-		// Concatenate each text value found until another a is found
-		// we may encounter either a closing
-		// <a> tag or another opening <a> tag
 	}
 
 	return result, nil

@@ -13,14 +13,14 @@ type stack []link
 func NewStack() *stack {
 	return new(stack)
 }
-func (s *stack) isEmpty() bool {
+func (s *stack) IsEmpty() bool {
 	return len(*s) == 0
 }
 func (s *stack) Push(newLink link) {
 	(*s) = append((*s), newLink)
 }
 func (s *stack) Pop() (link, error) {
-	if (*s).isEmpty() {
+	if (*s).IsEmpty() {
 		return link{}, errors.New("stack is empty")
 	}
 	r := (*s)[len(*s)-1]
@@ -29,7 +29,7 @@ func (s *stack) Pop() (link, error) {
 	return r, nil
 }
 func (s *stack) Peek() (link, error) {
-	if (*s).isEmpty() {
+	if (*s).IsEmpty() {
 		return link{}, errors.New("stack is empty")
 	}
 	return (*s)[len(*s)-1], nil
